@@ -423,4 +423,56 @@ class DatabaseHelper(context: Context) :
         }
         return comparativa
     }
+    // ==================== REPORTES DE MERMA ====================
+
+    fun getTotalMermaUnidades(): Int {
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT SUM(cantidad) FROM $TABLE_MERMA", null)
+        return cursor.use { if (it.moveToFirst()) it.getInt(0) else 0 }
+    }
+    fun getTopProductosMermados(): List<Pair<String, Int>> {
+        val db = readableDatabase
+        val lista = mutableListOf<Pair<String, Int>>()
+        val query = """
+        SELECT p.nombre, SUM(m.cantidad) as total_merma
+        FROM $TABLE_MERMA m
+        JOIN $TABLE_PRODUCTO p ON m.id_producto = p.id_producto
+        GROUP BY m.id_producto
+        ORDER BY total_merma DESC
+        LIMIT 5
+    """.trimIndent()
+        db.rawQuery(query, null).use {
+            while (it.moveToNext()) {
+                lista.add(it.getString(0) to it.getInt(1))
+            }
+        }
+        return lista
+    }
+
+// ==================== REPORTES DE FIADO ====================
+
+    fun getClientesConDeuda(): List<Triple<Int, String, Double>> {
+        val db = readableDatabase
+        val lista = mutableListOf<Triple<Int, String, Double>>()
+        val query = """
+        SELECT c.id_cliente, c.nombre, SUM(f.saldo_pendiente) as deuda
+        FROM $TABLE_FIADO f
+        JOIN $TABLE_CLIENTE c ON f.id_cliente = c.id_cliente
+        GROUP BY c.id_cliente
+        HAVING deuda > 0
+        ORDER BY deuda DESC
+    """.trimIndent()
+        db.rawQuery(query, null).use {
+            while (it.moveToNext()) {
+                lista.add(Triple(it.getInt(0), it.getString(1), it.getDouble(2)))
+            }
+        }
+        return lista
+    }
+
+    fun getTotalDeudaPendiente(): Double {
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT SUM(saldo_pendiente) FROM $TABLE_FIADO", null)
+        return cursor.use { if (it.moveToFirst()) it.getDouble(0) else 0.0 }
+    }
 }

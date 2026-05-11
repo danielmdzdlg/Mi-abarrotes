@@ -17,14 +17,10 @@ class ReportesActivity : AppCompatActivity() {
         dbHelper = DatabaseHelper(this)
 
         val tvGanancia = findViewById<TextView>(R.id.tvGananciaTotal)
-        val tvTop = findViewById<TextView>(R.id.tvTopVendidos)
-        val tvMargen = findViewById<TextView>(R.id.tvComparativaMargen)
-
-        // 1. Mostrar Ganancia Real
         val ganancia = dbHelper.getReporteGanancias()
         tvGanancia.text = "$${String.format("%.2f", ganancia)}"
 
-        // 2. Mostrar Top Vendidos
+        val tvTop = findViewById<TextView>(R.id.tvTopVendidos)
         val topList = dbHelper.getTopVendidos()
         if (topList.isEmpty()) {
             tvTop.text = "Aún no hay ventas registradas."
@@ -32,12 +28,38 @@ class ReportesActivity : AppCompatActivity() {
             tvTop.text = topList.joinToString("\n") { "${it.first}: ${it.second} unidades" }
         }
 
-        // 3. Mostrar Comparativa de Márgenes
+        val tvMargen = findViewById<TextView>(R.id.tvComparativaMargen)
         val margenList = dbHelper.getComparativaMargen()
         if (margenList.isEmpty()) {
             tvMargen.text = "No hay datos de costos disponibles."
         } else {
             tvMargen.text = margenList.joinToString("\n")
+        }
+
+        val tvMermaTotal = findViewById<TextView>(R.id.tvMermaTotal)
+        val tvTopMerma = findViewById<TextView>(R.id.tvTopMerma)
+
+        val totalMerma = dbHelper.getTotalMermaUnidades()
+        tvMermaTotal.text = totalMerma.toString()
+
+        val topMerma = dbHelper.getTopProductosMermados()
+        tvTopMerma.text = if (topMerma.isEmpty()) {
+            "No hay registros de merma"
+        } else {
+            topMerma.joinToString("\n") { "${it.first}: ${it.second} unidades" }
+        }
+
+        val tvTotalFiado = findViewById<TextView>(R.id.tvTotalFiado)
+        val tvClientesDeudores = findViewById<TextView>(R.id.tvClientesDeudores)
+
+        val deudaTotal = dbHelper.getTotalDeudaPendiente()
+        tvTotalFiado.text = "$${String.format("%.2f", deudaTotal)}"
+
+        val clientesDeuda = dbHelper.getClientesConDeuda()
+        tvClientesDeudores.text = if (clientesDeuda.isEmpty()) {
+            "No hay clientes con deuda"
+        } else {
+            clientesDeuda.joinToString("\n") { "${it.second}: $${String.format("%.2f", it.third)}" }
         }
     }
 }
