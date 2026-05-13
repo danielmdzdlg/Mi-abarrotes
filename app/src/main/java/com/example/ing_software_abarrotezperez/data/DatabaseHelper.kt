@@ -13,7 +13,6 @@ class DatabaseHelper(context: Context) :
 
     companion object {
         const val DATABASE_NAME = "tienda.db"
-        // Versión 2: Arregla el bug del id_producto y habilita nuevas tablas.
         const val DATABASE_VERSION = 2
 
         // --- Tablas ---
@@ -200,12 +199,12 @@ class DatabaseHelper(context: Context) :
         return cursor.use {
             if (it.moveToFirst()) {
                 Producto(
-                    idProducto    = it.getInt(it.getColumnIndexOrThrow("id_producto")),
-                    codigoBarras  = it.getString(it.getColumnIndexOrThrow("codigo_barras")),
-                    nombre        = it.getString(it.getColumnIndexOrThrow("nombre")),
-                    descripcion   = it.getString(it.getColumnIndexOrThrow("descripcion")) ?: "",
-                    precioVenta   = it.getDouble(it.getColumnIndexOrThrow("precio_venta")),
-                    stock         = it.getInt(it.getColumnIndexOrThrow("stock")),
+                    idProducto     = it.getInt(it.getColumnIndexOrThrow("id_producto")),
+                    codigoBarras   = it.getString(it.getColumnIndexOrThrow("codigo_barras")),
+                    nombre         = it.getString(it.getColumnIndexOrThrow("nombre")),
+                    descripcion    = it.getString(it.getColumnIndexOrThrow("descripcion")) ?: "",
+                    precioVenta    = it.getDouble(it.getColumnIndexOrThrow("precio_venta")),
+                    stock          = it.getInt(it.getColumnIndexOrThrow("stock")),
                     fechaCaducidad = it.getString(it.getColumnIndexOrThrow("fecha_caducidad"))
                 )
             } else null
@@ -262,12 +261,12 @@ class DatabaseHelper(context: Context) :
             while (it.moveToNext()) {
                 lista.add(
                     Producto(
-                        idProducto    = it.getInt(it.getColumnIndexOrThrow("id_producto")),
-                        codigoBarras  = it.getString(it.getColumnIndexOrThrow("codigo_barras")),
-                        nombre        = it.getString(it.getColumnIndexOrThrow("nombre")),
-                        descripcion   = it.getString(it.getColumnIndexOrThrow("descripcion")) ?: "",
-                        precioVenta   = it.getDouble(it.getColumnIndexOrThrow("precio_venta")),
-                        stock         = it.getInt(it.getColumnIndexOrThrow("stock")),
+                        idProducto     = it.getInt(it.getColumnIndexOrThrow("id_producto")),
+                        codigoBarras   = it.getString(it.getColumnIndexOrThrow("codigo_barras")),
+                        nombre         = it.getString(it.getColumnIndexOrThrow("nombre")),
+                        descripcion    = it.getString(it.getColumnIndexOrThrow("descripcion")) ?: "",
+                        precioVenta    = it.getDouble(it.getColumnIndexOrThrow("precio_venta")),
+                        stock          = it.getInt(it.getColumnIndexOrThrow("stock")),
                         fechaCaducidad = it.getString(it.getColumnIndexOrThrow("fecha_caducidad"))
                     )
                 )
@@ -300,9 +299,9 @@ class DatabaseHelper(context: Context) :
 
             for (item in items) {
                 val cvDetalle = ContentValues().apply {
-                    put("id_venta", idVenta)
-                    put("id_producto", item.producto.idProducto)
-                    put("cantidad", item.cantidad)
+                    put("id_venta",        idVenta)
+                    put("id_producto",     item.producto.idProducto)
+                    put("cantidad",        item.cantidad)
                     put("precio_unitario", item.producto.precioVenta)
                 }
                 db.insert(TABLE_DETALLE_VENTA, null, cvDetalle)
@@ -316,7 +315,7 @@ class DatabaseHelper(context: Context) :
                     arrayOf(item.producto.idProducto.toString())
                 )
                 while (cursorLote.moveToNext() && restante > 0) {
-                    val idLote = cursorLote.getInt(0)
+                    val idLote   = cursorLote.getInt(0)
                     val cantLote = cursorLote.getInt(1)
                     if (cantLote <= restante) {
                         db.execSQL("UPDATE lote SET cantidad = 0 WHERE id_lote = ?", arrayOf(idLote))
@@ -422,5 +421,155 @@ class DatabaseHelper(context: Context) :
             }
         }
         return comparativa
+    }
+
+    fun getTotalMermaUnidades(): Int {
+        val cursor = readableDatabase.rawQuery("SELECT SUM(cantidad) FROM merma", null)
+        return cursor.use { if (it.moveToFirst()) it.getInt(0) else 0 }
+    }
+
+    fun getTopProductosMermados(): List<Pair<String, Int>> {
+        val lista = mutableListOf<Pair<String, Int>>()
+        val query = """
+            SELECT p.nombre, SUM(m.cantidad) as total
+            FROM merma m
+            JOIN producto p ON m.id_producto = p.id_producto
+            GROUP BY m.id_producto
+            ORDER BY total DESC
+            LIMIT 5
+        """.trimIndent()
+        readableDatabase.rawQuery(query, null).use {
+            while (it.moveToNext()) lista.add(it.getString(0) to it.getInt(1))
+        }
+        return lista
+    }
+
+    fun getTotalDeudaPendiente(): Double {
+        val cursor = readableDatabase.rawQuery(
+            "SELECT SUM(saldo_pendiente) FROM fiado WHERE saldo_pendiente > 0", null)
+        return cursor.use { if (it.moveToFirst()) it.getDouble(0) else 0.0 }
+    }
+
+    fun getClientesConDeuda(): List<Triple<Int, String, Double>> {
+        val lista = mutableListOf<Triple<Int, String, Double>>()
+        val query = """
+            SELECT c.id_cliente, c.nombre, SUM(f.saldo_pendiente) as deuda
+            FROM fiado f
+            JOIN cliente c ON f.id_cliente = c.id_cliente
+            WHERE f.saldo_pendiente > 0
+            GROUP BY c.id_cliente
+            ORDER BY deuda DESC
+        """.trimIndent()
+        readableDatabase.rawQuery(query, null).use {
+            while (it.moveToNext())
+                lista.add(Triple(it.getInt(0), it.getString(1), it.getDouble(2)))
+        }
+        return lista
+    }
+
+    // ─────────────────────────────────────────────
+    //  CLIENTES Y FIADO
+    // ─────────────────────────────────────────────
+
+    data class Cliente(
+        val idCliente: Int = 0,
+        val nombre: String = ""
+    )
+
+    data class Fiado(
+        val idFiado: Int = 0,
+        val idCliente: Int = 0,
+        val idVenta: Int = 0,
+        val saldoPendiente: Double = 0.0
+    )
+
+    data class PagoFiado(
+        val idPago: Int = 0,
+        val idFiado: Int = 0,
+        val fechaPago: String = "",
+        val monto: Double = 0.0
+    )
+
+    fun registrarCliente(nombre: String): Long {
+        val cv = ContentValues().apply { put("nombre", nombre) }
+        return writableDatabase.insert(TABLE_CLIENTE, null, cv)
+    }
+
+    fun getAllClientes(): List<Cliente> {
+        val lista = mutableListOf<Cliente>()
+        val cursor = readableDatabase.query(
+            TABLE_CLIENTE, null, null, null, null, null, "nombre ASC"
+        )
+        cursor.use {
+            while (it.moveToNext()) {
+                lista.add(Cliente(
+                    idCliente = it.getInt(it.getColumnIndexOrThrow("id_cliente")),
+                    nombre    = it.getString(it.getColumnIndexOrThrow("nombre"))
+                ))
+            }
+        }
+        return lista
+    }
+
+    fun getFiadosActivosPorCliente(idCliente: Int): List<Fiado> {
+        val lista = mutableListOf<Fiado>()
+        val cursor = readableDatabase.query(
+            TABLE_FIADO, null,
+            "id_cliente = ? AND saldo_pendiente > 0",
+            arrayOf(idCliente.toString()),
+            null, null, null
+        )
+        cursor.use {
+            while (it.moveToNext()) {
+                lista.add(Fiado(
+                    idFiado        = it.getInt(it.getColumnIndexOrThrow("id_fiado")),
+                    idCliente      = it.getInt(it.getColumnIndexOrThrow("id_cliente")),
+                    idVenta        = it.getInt(it.getColumnIndexOrThrow("id_venta")),
+                    saldoPendiente = it.getDouble(it.getColumnIndexOrThrow("saldo_pendiente"))
+                ))
+            }
+        }
+        return lista
+    }
+
+    fun registrarFiado(idCliente: Int, monto: Double): Boolean {
+        val db = writableDatabase
+        db.beginTransaction()
+        return try {
+            val fecha = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+            val cvVenta = ContentValues().apply {
+                put("fecha", fecha)
+                put("total", monto)
+            }
+            val idVenta = db.insert(TABLE_VENTA, null, cvVenta)
+            val cvFiado = ContentValues().apply {
+                put("id_cliente",      idCliente)
+                put("id_venta",        idVenta)
+                put("saldo_pendiente", monto)
+            }
+            db.insert(TABLE_FIADO, null, cvFiado)
+            db.setTransactionSuccessful()
+            true
+        } catch (e: Exception) { false } finally { db.endTransaction() }
+    }
+
+    fun getPagosPorFiado(idFiado: Int): List<PagoFiado> {
+        val lista = mutableListOf<PagoFiado>()
+        val cursor = readableDatabase.query(
+            TABLE_PAGO_FIADO, null,
+            "id_fiado = ?", arrayOf(idFiado.toString()),
+            null, null, "fecha_pago DESC"
+        )
+        cursor.use {
+            while (it.moveToNext()) {
+                lista.add(PagoFiado(
+                    idPago    = it.getInt(it.getColumnIndexOrThrow("id_pago")),
+                    idFiado   = it.getInt(it.getColumnIndexOrThrow("id_fiado")),
+                    fechaPago = it.getString(it.getColumnIndexOrThrow("fecha_pago")),
+                    monto     = it.getDouble(it.getColumnIndexOrThrow("monto"))
+                ))
+            }
+        }
+        return lista
     }
 }
