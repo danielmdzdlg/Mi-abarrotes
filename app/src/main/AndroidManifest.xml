@@ -29,7 +29,9 @@
         <activity android:name=".ui.InventarioActivity" />
         <activity android:name=".ui.VentaActivity" />
         <activity android:name=".ui.ReportesActivity" />
-        <activity android:name=".MainActivity" />          <!-- ← agrega esta -->
+        <activity android:name=".MainActivity" />
+        <activity android:name=".ui.FiadoActivity" />
+        <activity android:name=".ui.DetalleFiadoActivity" />
     </application>
 
 </manifest>

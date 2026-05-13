@@ -39,5 +39,13 @@
         android:backgroundTint="#4CAF50"
         android:text="Reportes de Negocio"
         android:textSize="18sp" />
+    <Button
+        android:id="@+id/btnIrFiados"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_marginBottom="16dp"
+        android:backgroundTint="#FF9800"
+        android:text="Fiados"
+        android:textSize="18sp" />
 
 </LinearLayout>
