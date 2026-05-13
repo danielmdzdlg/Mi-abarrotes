@@ -2,42 +2,42 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:background="#F5F5F5"
     android:gravity="center"
-    android:padding="24dp"
-    android:background="#F5F5F5">
+    android:orientation="vertical"
+    android:padding="24dp">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="48dp"
         android:text="Abarrotes Pérez"
-        android:textSize="32sp"
-        android:textStyle="bold"
         android:textColor="#1A73E8"
-        android:layout_marginBottom="48dp" />
+        android:textSize="32sp"
+        android:textStyle="bold" />
 
     <Button
         android:id="@+id/btnIrInventario"
         android:layout_width="match_parent"
         android:layout_height="64dp"
+        android:layout_marginBottom="16dp"
         android:text="Inventario"
-        android:textSize="18sp"
-        android:layout_marginBottom="16dp" />
+        android:textSize="18sp" />
 
     <Button
         android:id="@+id/btnIrVentas"
         android:layout_width="match_parent"
         android:layout_height="64dp"
+        android:layout_marginBottom="16dp"
         android:text="Punto de Venta"
-        android:textSize="18sp"
-        android:layout_marginBottom="16dp" />
+        android:textSize="18sp" />
 
     <Button
         android:id="@+id/btnVerReportes"
         android:layout_width="match_parent"
         android:layout_height="64dp"
+        android:backgroundTint="#4CAF50"
         android:text="Reportes de Negocio"
-        android:textSize="18sp"
-        android:backgroundTint="#4CAF50" />
+        android:textSize="18sp" />
 
 </LinearLayout>
