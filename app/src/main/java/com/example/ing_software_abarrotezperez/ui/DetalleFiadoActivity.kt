@@ -30,7 +30,7 @@ class DetalleFiadoActivity : AppCompatActivity() {
 
         val tvTitulo        = findViewById<TextView>(R.id.tvTituloCliente)
         val tvSaldoTotal    = findViewById<TextView>(R.id.tvSaldoTotal)
-        val btnRegresar     = findViewById<Button>(R.id.btnRegresar)
+
         val btnNuevoFiado   = findViewById<Button>(R.id.btnNuevoFiado)
         val btnRegistrarPago = findViewById<Button>(R.id.btnRegistrarPago)
         val rvFiados        = findViewById<RecyclerView>(R.id.rvFiados)

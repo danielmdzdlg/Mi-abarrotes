@@ -1,6 +1,7 @@
 package com.example.ing_software_abarrotezperez.ui
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -13,10 +14,11 @@ import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
-
 import com.example.ing_software_abarrotezperez.R
 import com.example.ing_software_abarrotezperez.data.DatabaseHelper
 import com.example.ing_software_abarrotezperez.viewmodel.ScannerViewModel
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.MultiFormatWriter
 
 class InventarioActivity : AppCompatActivity() {
 
@@ -28,15 +30,14 @@ class InventarioActivity : AppCompatActivity() {
     private lateinit var actvNombre: AutoCompleteTextView
     private lateinit var etDescripcion: EditText
     private lateinit var etPrecioVenta: EditText
-    private lateinit var tvStock: TextView
+    private lateinit var etStock: EditText
     private lateinit var etCaducidad: EditText
-    private lateinit var cbNoPerecedero: CheckBox
+    private lateinit var spTipo: Spinner
     private lateinit var btnGuardar: Button
     private lateinit var btnLimpiar: Button
-    private lateinit var layoutCaducidad: View
+    private lateinit var ivBarcode: ImageView // Nueva vista para la imagen del código
 
     private var codigoActual: String = ""
-    private var stockActual: Int = 0
 
     // Variables para el interceptor HID
     private val barcodeBuffer = StringBuilder()
@@ -51,32 +52,74 @@ class InventarioActivity : AppCompatActivity() {
         // Bind vistas
         tvEstadoBt       = findViewById(R.id.tvEstadoBtInv)
         etCodigoProducto = findViewById(R.id.etCodigoProducto)
+        ivBarcode        = findViewById(R.id.ivBarcode)
         actvNombre       = findViewById(R.id.actvNombre)
         etDescripcion    = findViewById(R.id.etDescripcion)
         etPrecioVenta    = findViewById(R.id.etPrecioVenta)
-        tvStock          = findViewById(R.id.tvStock)
+        etStock          = findViewById(R.id.etStock)
         etCaducidad      = findViewById(R.id.etCaducidad)
-        cbNoPerecedero   = findViewById(R.id.cbNoPerecedero)
-        layoutCaducidad  = findViewById(R.id.layoutCaducidad)
+        spTipo           = findViewById(R.id.spTipo)
         btnGuardar       = findViewById(R.id.btnGuardarProducto)
         btnLimpiar       = findViewById(R.id.btnLimpiar)
 
         configurarSugerenciasNombres()
         configurarFormatoFecha()
-
-        cbNoPerecedero.setOnCheckedChangeListener { _, checked ->
-            layoutCaducidad.visibility = if (checked) View.GONE else View.VISIBLE
-            if (checked) etCaducidad.setText("")
-        }
+        configurarSpinnerTipo()
 
         btnGuardar.setOnClickListener { guardarProducto() }
         btnLimpiar.setOnClickListener { limpiarFormulario() }
+
+        // Bloquear stock por defecto hasta que se elija "No Perecedero"
+        etStock.isEnabled = false
+    }
+
+    private fun configurarSpinnerTipo() {
+        // Opciones: Índice 0 = Perecedero, Índice 1 = No Perecedero
+        val opciones = arrayOf("Perecedero", "No Perecedero")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, opciones)
+        spTipo.adapter = adapter
+
+        spTipo.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                if (position == 1) {
+                    // Es NO PERECEDERO
+                    etCaducidad.isEnabled = false
+                    etCaducidad.setText("")
+                    etStock.isEnabled = true // Liberamos el stock manual
+                    Toast.makeText(this@InventarioActivity, "Stock manual habilitado", Toast.LENGTH_SHORT).show()
+                } else {
+                    // Es PERECEDERO
+                    etCaducidad.isEnabled = true
+                    etStock.isEnabled = false // Bloqueamos el stock (solo aumenta por escáner)
+                }
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+    }
+
+    // --- GENERAR IMAGEN DEL CÓDIGO DE BARRAS ---
+    private fun generarCodigoBarrasImagen(codigo: String) {
+        try {
+            val bitMatrix = MultiFormatWriter().encode(codigo, BarcodeFormat.CODE_128, 600, 200)
+            val width = bitMatrix.width
+            val height = bitMatrix.height
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+            for (x in 0 until width) {
+                for (y in 0 until height) {
+                    bitmap.setPixel(x, y, if (bitMatrix.get(x, y)) Color.BLACK else Color.WHITE)
+                }
+            }
+            ivBarcode.setImageBitmap(bitmap)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // Si falla, limpiar la imagen
+            ivBarcode.setImageDrawable(null)
+        }
     }
 
     private fun configurarFormatoFecha() {
         etCaducidad.addTextChangedListener(object : TextWatcher {
             private var isUpdating = false
-
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
 
@@ -119,7 +162,7 @@ class InventarioActivity : AppCompatActivity() {
                     etCaducidad.setTextColor(Color.RED)
                     vibrarError()
                 } else {
-                    etCaducidad.setTextColor(Color.BLACK)
+                    etCaducidad.setTextColor(Color.WHITE) // El texto original es blanco
                 }
 
                 isUpdating = false
@@ -148,49 +191,44 @@ class InventarioActivity : AppCompatActivity() {
         actvNombre.setAdapter(adapter)
     }
 
-    // ── LÓGICA DE BLOQUEO DE CAMPOS ──────────────────────────────────────────
     private fun habilitarCamposModoNuevo(esNuevo: Boolean) {
         actvNombre.isEnabled = esNuevo
         etPrecioVenta.isEnabled = esNuevo
-        cbNoPerecedero.isEnabled = esNuevo
+        spTipo.isEnabled = esNuevo
 
-        // La descripción y la caducidad SIEMPRE se pueden editar
         etDescripcion.isEnabled = true
-        etCaducidad.isEnabled = true
+        // El stock y caducidad se gestionan en el OnItemSelected del Spinner
     }
 
     private fun procesarEscaneoInventario(codigo: String) {
         codigoActual = codigo
         etCodigoProducto.setText(codigo)
+        generarCodigoBarrasImagen(codigo) // Dibuja la barra
 
         val existente = vm.db.getProductoPorCodigo(codigo)
         if (existente != null) {
             // EL PRODUCTO YA EXISTE
-            stockActual = existente.stock + 1
+            val stockNuevo = existente.stock + 1
+            etStock.setText(stockNuevo.toString())
 
             actvNombre.setText(existente.nombre)
             etDescripcion.setText(existente.descripcion)
             etPrecioVenta.setText(existente.precioVenta.toString())
-            tvStock.text = "Cantidad en Stock: $stockActual"
 
             if (existente.fechaCaducidad.isNullOrEmpty()) {
-                cbNoPerecedero.isChecked = true
+                spTipo.setSelection(1) // No Perecedero
             } else {
-                cbNoPerecedero.isChecked = false
+                spTipo.setSelection(0) // Perecedero
                 etCaducidad.setText(existente.fechaCaducidad)
             }
 
-            // Bloqueamos los datos maestros para no modificarlos por error
             habilitarCamposModoNuevo(false)
-
-            Toast.makeText(this, "Producto conocido. Agregando lote (Stock: $stockActual)", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Producto conocido. Agregando lote (Stock: $stockNuevo)", Toast.LENGTH_SHORT).show()
         } else {
             // ES UN PRODUCTO NUEVO
             limpiarSoloCampos()
-            stockActual = 1
-            tvStock.text = "Cantidad en Stock: $stockActual"
+            etStock.setText("1")
 
-            // Habilitamos todo para que pueda registrarlo
             habilitarCamposModoNuevo(true)
             Toast.makeText(this, "Producto nuevo. Registre los datos.", Toast.LENGTH_SHORT).show()
         }
@@ -208,21 +246,24 @@ class InventarioActivity : AppCompatActivity() {
             return
         }
 
-        if (etCaducidad.currentTextColor == Color.RED) {
+        if (spTipo.selectedItemPosition == 0 && etCaducidad.currentTextColor == Color.RED) {
             Toast.makeText(this, "Por favor, ingresa una fecha válida", Toast.LENGTH_SHORT).show()
             vibrarError()
             return
         }
 
         val precio = etPrecioVenta.text.toString().toDoubleOrNull() ?: 0.0
-        val caducidad = if (cbNoPerecedero.isChecked) null else etCaducidad.text.toString().trim().ifEmpty { null }
+        val caducidad = if (spTipo.selectedItemPosition == 1) null else etCaducidad.text.toString().trim().ifEmpty { null }
+
+        // Lee el stock actual (sea por autoincremento o manual)
+        val stockGuardar = etStock.text.toString().toIntOrNull() ?: 0
 
         val producto = DatabaseHelper.Producto(
             codigoBarras   = codigoActual,
             nombre         = nombre,
             descripcion    = etDescripcion.text.toString().trim(),
             precioVenta    = precio,
-            stock          = stockActual,
+            stock          = stockGuardar,
             fechaCaducidad = caducidad
         )
 
@@ -239,23 +280,22 @@ class InventarioActivity : AppCompatActivity() {
     private fun limpiarFormulario() {
         codigoActual = ""
         etCodigoProducto.setText("")
+        ivBarcode.setImageDrawable(null) // Borrar la imagen de las barras
         limpiarSoloCampos()
-        habilitarCamposModoNuevo(true) // Al limpiar, preparamos para un posible producto nuevo
+        habilitarCamposModoNuevo(true)
     }
 
     private fun limpiarSoloCampos() {
-        stockActual = 0
-        tvStock.text = "Cantidad en Stock: 0"
+        etStock.setText("")
         actvNombre.setText("")
         etDescripcion.setText("")
         etPrecioVenta.setText("")
         etCaducidad.setText("")
-        cbNoPerecedero.isChecked = false
-        layoutCaducidad.visibility = View.VISIBLE
+        spTipo.setSelection(0)
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    //  INTERCEPTOR MODO HID (Teclado)
+    //  INTERCEPTOR MODO HID (Teclado del Escáner Bluetooth)
     // ─────────────────────────────────────────────────────────────────────────
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         val isHardwareDevice = event.device != null && !event.device.isVirtual
