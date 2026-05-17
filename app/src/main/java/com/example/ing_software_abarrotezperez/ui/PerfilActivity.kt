@@ -1,76 +1,66 @@
 package com.example.ing_software_abarrotezperez.ui
 
-import android.app.AlertDialog
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.Toast
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.example.ing_software_abarrotezperez.R
-import com.google.android.material.floatingactionbutton.FloatingActionButton
+import java.io.File
+import java.io.FileOutputStream
 
 class PerfilActivity : AppCompatActivity() {
 
-    // Variable global para nuestra imagen
     private lateinit var ivFotoPerfil: ImageView
+    private lateinit var btnCambiarFoto: Button
 
-    // 1. Lanzador para abrir la GALERÍA
-    private val abrirGaleria = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+    // Selector moderno que no requiere permisos extra en el Manifest
+    private val pickMedia = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) {
-            // Si el usuario seleccionó una imagen, la colocamos en el ImageView
             ivFotoPerfil.setImageURI(uri)
-        }
-    }
-
-    // 2. Lanzador para abrir la CÁMARA (Devuelve un Bitmap ideal para fotos de perfil)
-    private val abrirCamara = registerForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap: Bitmap? ->
-        if (bitmap != null) {
-            // Si el usuario tomó la foto, la colocamos en el ImageView
-            ivFotoPerfil.setImageBitmap(bitmap)
+            guardarFotoInternamente(uri)
+        } else {
+            Toast.makeText(this, "No seleccionaste ninguna imagen", Toast.LENGTH_SHORT).show()
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_perfil) // Conecta con el XML que hicimos antes
+        setContentView(R.layout.activity_perfil)
 
-        // Enlazamos las vistas del XML con Kotlin
         ivFotoPerfil = findViewById(R.id.ivFotoPerfil)
-        val btnCambiarFoto = findViewById<FloatingActionButton>(R.id.btnCambiarFoto)
-        val btnRegresar = findViewById<Button>(R.id.btnRegresarConfig)
+        btnCambiarFoto = findViewById(R.id.btnCambiarFoto)
 
-        // Qué pasa al hacer clic en el botón flotante morado
+        cargarFotoGuardada()
+
         btnCambiarFoto.setOnClickListener {
-            mostrarDialogoOpciones()
-        }
-
-        // Qué pasa al hacer clic en Regresar
-        btnRegresar.setOnClickListener {
-            finish() // Cierra esta pantalla y te devuelve a Configuración
+            pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
     }
 
-    // Función que muestra el menú para elegir Cámara o Galería
-    private fun mostrarDialogoOpciones() {
-        val opciones = arrayOf("Tomar foto con la cámara", "Elegir de la galería")
+    private fun guardarFotoInternamente(uri: Uri) {
+        try {
+            val inputStream = contentResolver.openInputStream(uri)
+            val file = File(filesDir, "foto_perfil.jpg")
+            val outputStream = FileOutputStream(file)
 
-        AlertDialog.Builder(this)
-            .setTitle("Actualizar foto de perfil")
-            .setItems(opciones) { _, opcionSeleccionada ->
-                when (opcionSeleccionada) {
-                    0 -> {
-                        // El usuario eligió la posición 0 (Cámara)
-                        abrirCamara.launch(null)
-                    }
-                    1 -> {
-                        // El usuario eligió la posición 1 (Galería)
-                        // Le decimos que solo nos muestre imágenes
-                        abrirGaleria.launch("image/*")
-                    }
+            inputStream?.use { input ->
+                outputStream.use { output ->
+                    input.copyTo(output)
                 }
             }
-            .show()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error al guardar imagen", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun cargarFotoGuardada() {
+        val file = File(filesDir, "foto_perfil.jpg")
+        if (file.exists()) {
+            ivFotoPerfil.setImageURI(Uri.fromFile(file))
+        }
     }
 }

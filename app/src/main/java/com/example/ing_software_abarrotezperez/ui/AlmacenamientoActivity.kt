@@ -9,6 +9,7 @@ import com.example.ing_software_abarrotezperez.R
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import java.io.File
+import android.content.Context
 
 class AlmacenamientoActivity : AppCompatActivity() {
 
@@ -38,5 +39,23 @@ class AlmacenamientoActivity : AppCompatActivity() {
     private fun calcularEspacio() {
         // Lógica para obtener el tamaño de la base de datos y archivos internos
         // Por ahora lo dejamos visual, pero aquí es donde actualizarías el progressApp.progress
+    }
+    fun calcularAlmacenamientoTotal(context: Context): String {
+        // 1. Peso de la Base de Datos
+        val dbFile = context.getDatabasePath("AbarrotesPerez.db")
+        val dbSize = if (dbFile.exists()) dbFile.length() else 0L
+
+        // 2. Peso de la App (APK)
+        val apkFile = File(context.applicationInfo.sourceDir)
+        val apkSize = if (apkFile.exists()) apkFile.length() else 0L
+
+        // 3. Peso de Datos Adicionales (como la foto de perfil)
+        val fotoFile = File(context.filesDir, "foto_perfil.jpg")
+        val fotoSize = if (fotoFile.exists()) fotoFile.length() else 0L
+
+        val totalBytes = dbSize + apkSize + fotoSize
+        val megabytes = totalBytes / (1024.0 * 1024.0)
+
+        return String.format("%.2f MB", megabytes)
     }
 }

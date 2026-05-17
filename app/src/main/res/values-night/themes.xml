@@ -1,7 +1,9 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
     <style name="Base.Theme.INGSOFTWAREABARROTEZPEREZ" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <item name="colorPrimary">#1A2F5A</item>
+        <item name="colorOnPrimary">#E0E0E0</item>
+        <item name="android:colorBackground">#121212</item>
+        <item name="android:windowBackground">#121212</item>
     </style>
 </resources>

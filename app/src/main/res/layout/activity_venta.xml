@@ -31,7 +31,37 @@
             android:textColor="#FFFFFF"
             android:textSize="24sp"
             android:textStyle="bold"
-            android:layout_marginEnd="32dp"/> </LinearLayout>
+            android:layout_marginEnd="32dp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:gravity="center_vertical"
+        android:background="#F0F0F0">
+
+        <TextView
+            android:id="@+id/tvEstadoBt"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Escáner: Esperando..."
+            android:textColor="#555555"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnConectarBt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CONECTAR"
+            android:textSize="12sp"
+            android:backgroundTint="#00B259"
+            android:minHeight="36dp" />
+    </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvItems"
@@ -42,6 +72,7 @@
         android:paddingTop="16dp"
         android:clipToPadding="false"
         tools:listitem="@android:layout/simple_list_item_1" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
