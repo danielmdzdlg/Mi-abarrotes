@@ -1,7 +1,10 @@
 package com.example.ing_software_abarrotezperez.ui
 
+import android.content.Intent
 import android.os.Bundle
+import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
 import com.example.ing_software_abarrotezperez.R
 
 class ConfiguracionActivity : AppCompatActivity() {
@@ -10,6 +13,26 @@ class ConfiguracionActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_configuracion)
 
-        // Aquí programaremos los clics más adelante
+        // 1. Botón "Mi Perfil" (Abre la pantalla de la foto de perfil)
+        val cardMiPerfil = findViewById<CardView>(R.id.cardMiPerfil)
+        cardMiPerfil.setOnClickListener {
+            startActivity(Intent(this, PerfilActivity::class.java))
+        }
+
+        // 2. Botón "Almacenamiento" (Abre la pantalla que calcula el peso de la BD y el APK)
+        val cardAlmacenamiento = findViewById<CardView>(R.id.cardAlmacenamiento)
+        cardAlmacenamiento.setOnClickListener {
+            startActivity(Intent(this, AlmacenamientoActivity::class.java))
+        }
+
+        // 3. Botón "Cerrar Sesión" (Te regresa al Login de forma segura)
+        val btnCerrarSesion = findViewById<Button>(R.id.btnCerrarSesion)
+        btnCerrarSesion.setOnClickListener {
+            val intent = Intent(this, LoginActivity::class.java)
+            // Estas banderas limpian el historial de pantallas para que no puedas regresar con el botón de atrás
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+            finish()
+        }
     }
 }
