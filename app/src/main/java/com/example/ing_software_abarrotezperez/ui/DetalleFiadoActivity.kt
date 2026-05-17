@@ -28,22 +28,31 @@ class DetalleFiadoActivity : AppCompatActivity() {
         idCliente     = intent.getIntExtra("id_cliente", -1)
         nombreCliente = intent.getStringExtra("nombre_cliente") ?: "Cliente"
 
-        val tvTitulo         = findViewById<TextView>(R.id.tvTituloCliente)
-        val tvSaldoTotal     = findViewById<TextView>(R.id.tvSaldoTotal)
-        val btnRegresar      = findViewById<Button>(R.id.btnRegresar)
-        val btnNuevoFiado    = findViewById<Button>(R.id.btnNuevoFiado)
+        val tvTitulo        = findViewById<TextView>(R.id.tvTituloCliente)
+        val tvSaldoTotal    = findViewById<TextView>(R.id.tvSaldoTotal)
+
+        val btnNuevoFiado   = findViewById<Button>(R.id.btnNuevoFiado)
         val btnRegistrarPago = findViewById<Button>(R.id.btnRegistrarPago)
-        val rvFiados         = findViewById<RecyclerView>(R.id.rvFiados)
-        val tvSinDeudas      = findViewById<TextView>(R.id.tvSinDeudas)
+        val rvFiados        = findViewById<RecyclerView>(R.id.rvFiados)
+        val tvSinDeudas     = findViewById<TextView>(R.id.tvSinDeudas)
 
         tvTitulo.text = "👤 $nombreCliente"
-        rvFiados.layoutManager = LinearLayoutManager(this)
+
+        // Configurar RecyclerView con lista simple de texto
+        val layoutManager = LinearLayoutManager(this)
+        rvFiados.layoutManager = layoutManager
 
         cargarDetalle(tvSaldoTotal, rvFiados, tvSinDeudas)
 
         btnRegresar.setOnClickListener { finish() }
-        btnNuevoFiado.setOnClickListener { mostrarDialogoNuevoFiado(tvSaldoTotal, rvFiados, tvSinDeudas) }
-        btnRegistrarPago.setOnClickListener { mostrarDialogoPago(tvSaldoTotal, rvFiados, tvSinDeudas) }
+
+        btnNuevoFiado.setOnClickListener {
+            mostrarDialogoNuevoFiado(tvSaldoTotal, rvFiados, tvSinDeudas)
+        }
+
+        btnRegistrarPago.setOnClickListener {
+            mostrarDialogoPago(tvSaldoTotal, rvFiados, tvSinDeudas)
+        }
     }
 
     private fun cargarDetalle(tvSaldoTotal: TextView, rvFiados: RecyclerView, tvSinDeudas: TextView) {
@@ -53,16 +62,14 @@ class DetalleFiadoActivity : AppCompatActivity() {
         val fiados = db.getFiadosActivosPorCliente(idCliente)
 
         if (fiados.isEmpty()) {
-            rvFiados.visibility    = View.GONE
+            rvFiados.visibility   = View.GONE
             tvSinDeudas.visibility = View.VISIBLE
         } else {
-            rvFiados.visibility    = View.VISIBLE
+            rvFiados.visibility   = View.VISIBLE
             tvSinDeudas.visibility = View.GONE
 
-            val textos = fiados.mapIndexed { index, fiado ->
-                "Deuda #${index + 1} — Saldo: $${"%.2f".format(fiado.saldoPendiente)}"
-            }
-
+            // Adaptador simple con texto
+            val textos = fiados.map { "Deuda #${it.idFiado} — Saldo: $${"%.2f".format(it.saldoPendiente)}" }
             rvFiados.adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 override fun onCreateViewHolder(parent: android.view.ViewGroup, viewType: Int): RecyclerView.ViewHolder {
                     val tv = TextView(parent.context).apply {
@@ -88,9 +95,6 @@ class DetalleFiadoActivity : AppCompatActivity() {
         val btnCancelar = dialogView.findViewById<Button>(R.id.btnCancelarFiado)
         val btnGuardar  = dialogView.findViewById<Button>(R.id.btnGuardarFiado)
 
-        // FIX Problema 1: hint claro para no confundir con productos
-        etDesc.hint = "Concepto del adeudo (ej: compra del dia, mandado...)"
-
         val dialog = AlertDialog.Builder(this)
             .setView(dialogView)
             .setCancelable(false)
@@ -104,7 +108,6 @@ class DetalleFiadoActivity : AppCompatActivity() {
 
             if (desc.isEmpty() || monto == null || monto <= 0) {
                 tvError.visibility = View.VISIBLE
-                tvError.text = "Por favor completa todos los campos"
                 return@setOnClickListener
             }
 
@@ -129,6 +132,7 @@ class DetalleFiadoActivity : AppCompatActivity() {
             return
         }
 
+        // Tomar la deuda más antigua (primera)
         val fiadoActivo = fiados.first()
 
         val dialogView  = LayoutInflater.from(this).inflate(R.layout.dialog_nuevo_fiado, null)
@@ -138,8 +142,9 @@ class DetalleFiadoActivity : AppCompatActivity() {
         val btnCancelar = dialogView.findViewById<Button>(R.id.btnCancelarFiado)
         val btnGuardar  = dialogView.findViewById<Button>(R.id.btnGuardarFiado)
 
+        // Ajustar para pago
         etDesc.visibility = View.GONE
-        etMonto.hint = "Monto a pagar (máx: $${"%.2f".format(fiadoActivo.saldoPendiente)})"
+        etMonto.hint      = "Monto a pagar (máx: $${"%.2f".format(fiadoActivo.saldoPendiente)})"
 
         val dialog = AlertDialog.Builder(this)
             .setView(dialogView)
@@ -157,17 +162,13 @@ class DetalleFiadoActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // FIX Problema 2: redondear para evitar error de precisión con decimales
-            val montoPago   = "%.2f".format(monto).toDouble()
-            val saldoMaximo = "%.2f".format(fiadoActivo.saldoPendiente).toDouble()
-
-            if (montoPago > saldoMaximo) {
+            if (monto > fiadoActivo.saldoPendiente) {
                 tvError.visibility = View.VISIBLE
-                tvError.text = "El monto no puede ser mayor al saldo ($${"%.2f".format(saldoMaximo)})"
+                tvError.text = "El monto no puede ser mayor al saldo"
                 return@setOnClickListener
             }
 
-            val ok = db.registrarPagoFiado(fiadoActivo.idFiado, montoPago)
+            val ok = db.registrarPagoFiado(fiadoActivo.idFiado, monto)
             if (ok) {
                 Toast.makeText(this, "Pago registrado ✅", Toast.LENGTH_SHORT).show()
                 cargarDetalle(tvSaldoTotal, rvFiados, tvSinDeudas)

@@ -2,8 +2,8 @@ package com.example.ing_software_abarrotezperez
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView // <-- Importamos CardView (puedes borrar el import de Button)
 import com.example.ing_software_abarrotezperez.ui.FiadoActivity
 import com.example.ing_software_abarrotezperez.ui.InventarioActivity
 import com.example.ing_software_abarrotezperez.ui.VentaActivity
@@ -14,10 +14,12 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        // Referencias a los botones del XML
-        val btnInventario = findViewById<Button>(R.id.btnIrInventario)
-        val btnVentas = findViewById<Button>(R.id.btnIrVentas)
-        val btnReportes = findViewById<Button>(R.id.btnVerReportes)
+
+        // Referencias a los botones (ahora son CardView) del XML
+        val btnInventario = findViewById<CardView>(R.id.btnIrInventario)
+        val btnVentas = findViewById<CardView>(R.id.btnIrVentas)
+        val btnReportes = findViewById<CardView>(R.id.btnVerReportes)
+        val btnFiados = findViewById<CardView>(R.id.btnIrFiados)
 
         // Acción: Abrir Inventario
         btnInventario.setOnClickListener {
@@ -37,7 +39,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        val btnFiados = findViewById<Button>(R.id.btnIrFiados)
+        // Acción: Abrir Fiados
         btnFiados.setOnClickListener {
             val intent = Intent(this, FiadoActivity::class.java)
             startActivity(intent)

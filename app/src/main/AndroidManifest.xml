@@ -32,6 +32,11 @@
         <activity android:name=".MainActivity" />
         <activity android:name=".ui.FiadoActivity" />
         <activity android:name=".ui.DetalleFiadoActivity" />
+
+        <activity android:name=".ui.ConfiguracionActivity" />
+        <activity android:name=".ui.PerfilActivity" />
+        <activity android:name=".ui.AlmacenamientoActivity" />
+
     </application>
 
 </manifest>

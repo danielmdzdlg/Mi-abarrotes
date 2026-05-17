@@ -1,74 +1,93 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#F5F5F5">
+    android:background="#FFFFFF"
+    android:orientation="vertical">
 
-    <!-- Barra superior -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#1A73E8"
+        android:layout_height="75dp"
+        android:background="#5E17EB"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="16dp"
-        android:gravity="center_vertical">
+        android:paddingHorizontal="16dp">
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="📋 Módulo de Fiados"
+            android:text="FIADOS"
             android:textColor="#FFFFFF"
-            android:textSize="20sp"
-            android:textStyle="bold"/>
+            android:textSize="32sp"
+            android:textStyle="bold" />
 
         <Button
             android:id="@+id/btnNuevoCliente"
-            android:layout_width="wrap_content"
+            android:layout_width="128dp"
             android:layout_height="wrap_content"
-            android:text="+ Cliente"
-            android:textSize="13sp"
             android:backgroundTint="#FFFFFF"
-            android:textColor="#1A73E8"/>
-
+            android:text="+ CLIENTE"
+            android:textColor="#5E17EB"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:cornerRadius="20dp" />
     </LinearLayout>
 
-    <!-- Buscador -->
-    <com.google.android.material.textfield.TextInputLayout
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Buscar cliente..."
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-        android:layout_margin="16dp">
+        android:layout_margin="16dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="2dp"
+        app:strokeColor="#DDDDDD"
+        app:strokeWidth="1dp">
 
-        <com.google.android.material.textfield.TextInputEditText
+        <EditText
             android:id="@+id/etBuscar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="text"/>
+            android:layout_height="50dp"
+            android:background="@android:color/transparent"
+            android:hint="Buscar cliente..."
+            android:paddingHorizontal="16dp"
+            android:textSize="16sp" />
+    </com.google.android.material.card.MaterialCardView>
 
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <!-- Lista de clientes -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvClientes"
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="20dp"
         android:layout_weight="1"
-        android:padding="8dp"
-        android:clipToPadding="false"/>
+        app:cardBackgroundColor="#FFFFFF"
+        app:cardCornerRadius="30dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#5E17EB"
+        app:strokeWidth="5dp">
 
-    <!-- Mensaje lista vacía -->
-    <TextView
-        android:id="@+id/tvVacio"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:gravity="center"
-        android:text="No hay clientes con fiado registrados"
-        android:textColor="#999999"
-        android:textSize="16sp"
-        android:visibility="gone"/>
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="16dp">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvClientes"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false" />
+
+            <TextView
+                android:id="@+id/tvVacio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="No hay clientes con fiado registrados"
+                android:textColor="#999999"
+                android:textSize="16sp"
+                android:visibility="gone" />
+
+        </RelativeLayout>
+    </com.google.android.material.card.MaterialCardView>
 
 </LinearLayout>
